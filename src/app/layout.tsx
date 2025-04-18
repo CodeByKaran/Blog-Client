@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import GradientBackground from "@/components/custom/GradientBackground";
+import AppLayout from "@/components/custom/AppLayout";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -25,7 +26,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} bg-black antialiased`}>
         <GradientBackground />
-        {children}
+        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );
