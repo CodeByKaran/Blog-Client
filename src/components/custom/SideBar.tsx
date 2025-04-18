@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import ProfileSection from "./AsideProfileSection";
 import AsideNavigation from "./AsideNavigation";
-import { ScrollArea } from "../ui/scroll-area";
 
 interface SidebarProps {
   isOpen: boolean;

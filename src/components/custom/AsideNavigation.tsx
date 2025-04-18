@@ -8,7 +8,7 @@ import { ScrollArea } from "../ui/scroll-area";
 const navItems = [
   {
     item: "Home",
-    href: "/home",
+    href: "/",
     icon: <Home className="h-6 w-6" />,
   },
   {

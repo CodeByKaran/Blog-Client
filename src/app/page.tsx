@@ -1,3 +1,7 @@
-export default function Home() {
-  return <div className="font-poppins text-gray-100">lorem10</div>;
-}
+import React from "react";
+
+const Home = () => {
+  return <div className="text-gray-100">home</div>;
+};
+
+export default Home;
