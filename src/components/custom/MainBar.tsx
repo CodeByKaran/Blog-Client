@@ -6,7 +6,7 @@ interface MainBarProps {
 
 const MainBar = ({ children }: MainBarProps) => {
   return (
-    <main className="min-h-screen flex-1 overflow-y-auto p-6 text-gray-100">
+    <main className="min-h-screen flex-1 overflow-y-auto text-gray-100">
       {children}
     </main>
   );

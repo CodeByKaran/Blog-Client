@@ -5,6 +5,8 @@
 
 @theme {
   --font-poppins: "Poppins", sans-serif;
+  --color-black-show: #060606;
+  --breakpoint-s450: 28.125rem;
 }
 
 @layer utilities {

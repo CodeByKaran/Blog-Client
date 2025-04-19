@@ -20,7 +20,7 @@ const AppLayout = ({ children }: LayoutProps) => {
 
       <div className="flex flex-1 flex-col lg:ml-75">
         {/* Mobile header with menu button */}
-        <header className="sticky top-0 z-10 p-4 lg:hidden">
+        <header className="fixed top-2 z-10 w-fit p-4 lg:hidden">
           <Button
             variant="ghost"
             size="icon"
