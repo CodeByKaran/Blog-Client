@@ -11,7 +11,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import RightSideBar from "./RightSideBar";
-import { Badge } from "../ui/badge";
 
 // Create a separate toggle button component that uses the useSidebar hook
 function MobileMenuToggle() {
@@ -42,13 +41,18 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             <header className="sticky top-0 z-50 flex h-15 items-center gap-4 border-b bg-transparent px-4 py-3 backdrop-blur-lg md:justify-center">
               <MobileMenuToggle />
               <div className="no-scrollbar relative flex w-full max-w-md gap-x-1.5 overflow-x-auto font-poppins text-sm font-thin md:justify-center">
-                <Badge variant={"outline"} className="p-3">
+                <Button variant={"outline"} size={"sm"}>
                   Trendings
-                </Badge>
-                <Badge variant={"outline"}>Trendings</Badge>
-                <Badge variant={"outline"}>Codings</Badge>
-                <Badge variant={"outline"}>Fashion</Badge>
-                <Badge variant={"outline"}>Actress</Badge>
+                </Button>
+                <Button variant={"outline"} size={"sm"}>
+                  Codings
+                </Button>
+                <Button variant={"outline"} size={"sm"}>
+                  Fashion
+                </Button>
+                <Button variant={"outline"} size={"sm"}>
+                  Actress
+                </Button>
               </div>
             </header>
 

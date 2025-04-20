@@ -60,7 +60,7 @@ const AppSidebar = () => {
         </div>
       </SidebarHeader>
       <SidebarSeparator />
-      <SidebarContent className="pl-3">
+      <SidebarContent className="max-h-fit pb-4 pl-3 sm:pb-0">
         <SidebarGroup>
           <SidebarGroupLabel>
             <div className="font-poppins text-lg font-medium">Profile</div>
@@ -78,7 +78,7 @@ const AppSidebar = () => {
               return (
                 <SidebarMenuItem
                   key={e.item}
-                  onClick={() => toggle.isMobile && toggle.toggleSidebar}
+                  onClick={() => toggle.isMobile && toggle.toggleSidebar()}
                 >
                   <SidebarMenuButton asChild isActive={e.href == path}>
                     <Link href={e.href}>

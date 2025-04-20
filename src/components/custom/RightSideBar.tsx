@@ -80,7 +80,7 @@ export default function RightSidebar() {
   }, []);
 
   return (
-    <div className="w-72 border-l bg-transparent">
+    <div className="fixed top-0 right-0 flex h-screen w-72 flex-col border-l bg-transparent">
       <div className="flex h-full flex-col">
         {/* Sticky Search Header */}
         <div
@@ -137,7 +137,7 @@ export default function RightSidebar() {
         </div>
 
         {/* Right Sidebar Content */}
-        <div className="flex-1 p-4">
+        <div className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 flex-1 overflow-y-auto p-4">
           <h3 className="mb-4 text-lg font-medium">Online Users</h3>
           <div className="space-y-3">
             {users.slice(0, 5).map((user) => (
@@ -163,7 +163,7 @@ export default function RightSidebar() {
           <div className="mt-6">
             <h3 className="mb-4 text-lg font-medium">Recent Activity</h3>
             <div className="space-y-4">
-              {[1, 2, 3].map((item) => (
+              {[1, 2, 3, 4, 5].map((item) => (
                 <div key={item} className="border-b pb-3 last:border-0">
                   <p className="text-sm">
                     <span className="font-medium">Alex Johnson</span> commented
