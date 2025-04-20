@@ -9,7 +9,7 @@ interface ProfileSectionProps {
 
 const ProfileSection = ({ username = "Karan" }: ProfileSectionProps) => {
   return (
-    <div className="mt-3 pl-2">
+    <div className="mt-2 pl-2">
       <div className="group flex cursor-pointer items-center gap-3">
         <Avatar>
           <AvatarImage src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7" />
@@ -26,8 +26,8 @@ const ProfileSection = ({ username = "Karan" }: ProfileSectionProps) => {
         <h3 className="font-poppins font-medium text-gray-100">About Me</h3>
         <p className="font-poppins text-[0.8rem] font-normal text-gray-50">
           Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdam
-          voluptatem quisquam itaque praesentium soluta nulla quasi earum
-          ratione, incidunt dicta?
+          Lorem ipsum dolor sit amet. vol Lorem ipsum dolor sit amet consectetur
+          adipisicing elit.
         </p>
       </div>
     </div>

@@ -28,7 +28,7 @@ interface BlogCardProps {
 
 const BlogCard = ({ user, blog }: BlogCardProps) => {
   return (
-    <Card className="max-w-2xl overflow-hidden rounded-xl border-gray-800 bg-slate-950 shadow-xl transition-all duration-300 hover:shadow-2xl hover:shadow-purple-900/20">
+    <Card className="w-full overflow-hidden bg-transparent">
       {/* User Section */}
       <div className="flex items-center gap-4 px-6 pt-5">
         <div className="h-12 w-12 overflow-hidden rounded-full border border-purple-900/30 shadow-md shadow-purple-900/20">
@@ -72,7 +72,7 @@ const BlogCard = ({ user, blog }: BlogCardProps) => {
                       height={516}
                       src={image || "/placeholder.svg"}
                       alt={`${blog.title} - Image ${index + 1}`}
-                      className="h-[516px] w-full object-cover transition-transform duration-500 hover:scale-105"
+                      className="h-[416px] w-full object-cover transition-transform duration-500 hover:scale-105"
                     />
                   </div>
                 </CarouselItem>
