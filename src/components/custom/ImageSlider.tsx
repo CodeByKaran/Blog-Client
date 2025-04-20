@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselNext,
-  CarouselPrevious,
-} from "../ui/carousel";
+import { Carousel, CarouselApi, CarouselContent } from "../ui/carousel";
 
 const ImageSlider = ({ children }: { children: React.ReactNode }) => {
   const [api, setApi] = useState<CarouselApi>();
