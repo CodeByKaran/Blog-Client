@@ -12,6 +12,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface BlogCardProps {
   user: {
@@ -56,7 +57,7 @@ const BlogCard = ({ user, blog }: BlogCardProps) => {
       <div className="flex items-center gap-4 px-6 pt-5">
         <div className="h-12 w-12 overflow-hidden rounded-full border border-purple-900/30 shadow-md shadow-purple-900/20">
           {user.image ? (
-            <img
+            <Image
               src={user.image || "/placeholder.svg"}
               alt={user.username}
               className="h-full w-full object-cover"
@@ -89,7 +90,7 @@ const BlogCard = ({ user, blog }: BlogCardProps) => {
                 {blog.images.map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="overflow-hidden">
-                      <img
+                      <Image
                         src={image || "/placeholder.svg"}
                         alt={`${blog.title} - Image ${index + 1}`}
                         className="h-64 w-full object-cover transition-transform duration-500 hover:scale-105"

@@ -1,39 +1,59 @@
 "use client";
-import React, { useState } from "react";
-import SideBar from "./SideBar";
-import MainBar from "./MainBar";
+
+import type React from "react";
+import { Menu, Search } from "lucide-react";
+import AppSideBar from "./AppSideBar";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  SidebarProvider,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const AppLayout = ({ children }: LayoutProps) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+// Create a separate toggle button component that uses the useSidebar hook
+function MobileMenuToggle() {
+  const { toggleSidebar } = useSidebar();
 
   return (
-    <div className="flex h-full min-h-screen">
-      <SideBar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
+    <Button
+      variant="ghost"
+      size="icon"
+      className="md:hidden"
+      onClick={toggleSidebar}
+    >
+      <Menu className="h-5 w-5" />
+      <span className="sr-only">Toggle sidebar</span>
+    </Button>
+  );
+}
 
-      <div className="flex flex-1 flex-col lg:ml-75">
-        {/* Mobile header with menu button */}
-        <header className="fixed top-2 z-10 w-fit p-4 lg:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="lg:hidden"
-          >
-            <Menu className="h-5 w-5 fill-white" color="white" />
-          </Button>
-        </header>
+const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen bg-gray-50">
+        <AppSideBar />
+        <SidebarInset>
+          <div className="flex w-full flex-col">
+            {/* Fixed Searchbar */}
+            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 py-3">
+              <MobileMenuToggle />
+              <div className="relative w-full max-w-md">
+                <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search..."
+                  className="w-full bg-background pl-8"
+                />
+              </div>
+            </header>
 
-        <MainBar>{children}</MainBar>
+            {/* Main Content */}
+            <main className="flex-1">{children}</main>
+          </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
