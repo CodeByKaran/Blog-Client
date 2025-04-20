@@ -43,15 +43,15 @@ const navItems = [
 const AppSidebar = () => {
   const path = usePathname();
   return (
-    <Sidebar className="w-[300px] border-r-0">
-      <SidebarHeader className="border-b border-dashed border-gray-500/50">
-        <div className="flex items-center gap-2 pt-2">
+    <Sidebar className="border-r-0">
+      <SidebarHeader className="pl-3">
+        <div className="flex items-center gap-2 px-2 pt-2">
           <div className="font-poppins text-xl font-medium">
             <span className="text-[1.2em] text-purple-500">N</span>arrate
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="pt-1 pl-3">
         <SidebarGroup>
           <SidebarGroupLabel>
             <div className="font-poppins text-lg font-medium">Profile</div>
@@ -80,7 +80,7 @@ const AppSidebar = () => {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="pl-3">
         <LoginLogoutButton />
         <div className="px-4 py-2 text-xs text-muted-foreground">
           © 2025 Narrate Inc.

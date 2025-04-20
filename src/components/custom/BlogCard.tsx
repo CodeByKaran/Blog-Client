@@ -3,16 +3,9 @@
 import { format } from "date-fns";
 import { HelpCircle, MessageCircle, Save, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import ImageSlider from "./ImageSlider";
+import { CarouselItem } from "../ui/carousel";
 
 interface BlogCardProps {
   user: {
@@ -22,7 +15,7 @@ interface BlogCardProps {
   blog: {
     title: string;
     content: string;
-    images?: string[];
+    images: string[];
     tags: string[];
     createdAt: Date;
     metrics: {
@@ -34,23 +27,6 @@ interface BlogCardProps {
 }
 
 const BlogCard = ({ user, blog }: BlogCardProps) => {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!api) {
-      return;
-    }
-
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
-
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
-    });
-  }, [api]);
-
   return (
     <Card className="max-w-2xl overflow-hidden rounded-xl border-gray-800 bg-slate-950 shadow-xl transition-all duration-300 hover:shadow-2xl hover:shadow-purple-900/20">
       {/* User Section */}
@@ -58,6 +34,8 @@ const BlogCard = ({ user, blog }: BlogCardProps) => {
         <div className="h-12 w-12 overflow-hidden rounded-full border border-purple-900/30 shadow-md shadow-purple-900/20">
           {user.image ? (
             <Image
+              width={200}
+              height={300}
               src={user.image || "/placeholder.svg"}
               alt={user.username}
               className="h-full w-full object-cover"
@@ -84,28 +62,23 @@ const BlogCard = ({ user, blog }: BlogCardProps) => {
         <p className="text-gray-300">{blog.content}</p>
 
         {blog.images && blog.images.length > 0 && (
-          <div className="relative mt-6 overflow-hidden rounded-lg border border-gray-800">
-            <Carousel setApi={setApi} className="w-full">
-              <CarouselContent>
-                {blog.images.map((image, index) => (
-                  <CarouselItem key={index}>
-                    <div className="overflow-hidden">
-                      <Image
-                        src={image || "/placeholder.svg"}
-                        alt={`${blog.title} - Image ${index + 1}`}
-                        className="h-64 w-full object-cover transition-transform duration-500 hover:scale-105"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-gray-700/50 bg-black/70 px-3 py-1 text-sm font-medium text-white backdrop-blur-sm">
-                {current} / {count}
-              </div>
-              <CarouselPrevious className="absolute left-2 border border-gray-700/50 bg-black/70 text-gray-200 backdrop-blur-sm hover:bg-black/90" />
-              <CarouselNext className="absolute right-2 border border-gray-700/50 bg-black/70 text-gray-200 backdrop-blur-sm hover:bg-black/90" />
-            </Carousel>
-          </div>
+          <ImageSlider>
+            <>
+              {blog.images.map((image, index) => (
+                <CarouselItem key={index}>
+                  <div className="overflow-hidden">
+                    <Image
+                      width={516}
+                      height={516}
+                      src={image || "/placeholder.svg"}
+                      alt={`${blog.title} - Image ${index + 1}`}
+                      className="h-[516px] w-full object-cover transition-transform duration-500 hover:scale-105"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </>
+          </ImageSlider>
         )}
 
         {/* Tags */}

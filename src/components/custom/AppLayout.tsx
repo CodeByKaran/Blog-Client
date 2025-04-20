@@ -31,12 +31,12 @@ function MobileMenuToggle() {
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen w-screen">
         <AppSideBar />
-        <SidebarInset>
+        <SidebarInset className="">
           <div className="flex w-full flex-col">
             {/* Fixed Searchbar */}
-            <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 py-3">
+            <header className="sticky top-0 z-50 flex h-15 items-center justify-center gap-4 border-b bg-transparent px-4 py-3 backdrop-blur-lg">
               <MobileMenuToggle />
               <div className="relative w-full max-w-md">
                 <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
@@ -49,7 +49,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 bg-transparent">{children}</main>
           </div>
         </SidebarInset>
       </div>
