@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
 
 // Sample user data
 const users = [
@@ -112,7 +113,9 @@ export default function RightSidebar() {
                       }}
                     >
                       <div className="flex-shrink-0">
-                        <img
+                        <Image
+                          width={10}
+                          height={10}
                           src={user.avatar || "/placeholder.svg"}
                           alt={user.name}
                           className="h-8 w-8 rounded-full"
@@ -143,7 +146,9 @@ export default function RightSidebar() {
             {users.slice(0, 5).map((user) => (
               <div key={user.id} className="flex items-center gap-3">
                 <div className="relative">
-                  <img
+                  <Image
+                    width={10}
+                    height={10}
                     src={user.avatar || "/placeholder.svg"}
                     alt={user.name}
                     className="h-8 w-8 rounded-full"

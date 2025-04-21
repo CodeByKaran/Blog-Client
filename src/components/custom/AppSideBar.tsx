@@ -42,7 +42,7 @@ const navItems = [
   },
   {
     item: "Explore",
-    href: "#",
+    href: "/explore",
     icon: <Search className="h-6 w-6" />,
   },
 ];
