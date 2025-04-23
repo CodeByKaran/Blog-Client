@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export function ReportSection() {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-xl border border-gray-800 bg-transparent p-6">
       <h2 className="mb-4 text-xl font-semibold text-white">Report Center</h2>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -34,7 +34,7 @@ export function ReportSection() {
             <h3 className="font-medium text-red-400">Block User</h3>
           </div>
           <p className="mb-4 text-sm text-gray-400">
-            Don't want to interact with someone? Block them from your feed.
+            Don&apos;t want to interact with someone? Block them from your feed.
           </p>
           <Button
             variant="outline"

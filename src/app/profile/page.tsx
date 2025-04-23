@@ -10,10 +10,10 @@ const Profile = () => {
   // Mock data
   const [userData, setUserData] = useState({
     id: "1",
-    name: "Karan Singh",
+    name: "Karan kumar",
     username: "karan",
     email: "karan@example.com",
-    avatar: "/placeholder.svg?height=200&width=200",
+    avatar: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
     bio: "Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quibusdom Lorem ipsum dolor sit amet. vol lorem ipsum dolor sit amet consectetur adipisicing elit.",
   });
 
@@ -57,68 +57,6 @@ const Profile = () => {
         title: "Photography Basics: Mastering Landscape Shots",
         image: "/placeholder.svg?height=300&width=600",
       },
-    },
-  ];
-
-  const onlineUsers = [
-    {
-      id: "1",
-      name: "Alex Johnson",
-      username: "alexj",
-      avatar: "/placeholder.svg?height=50&width=50",
-      online: true,
-    },
-    {
-      id: "2",
-      name: "Sam Wilson",
-      username: "samw",
-      avatar: "/placeholder.svg?height=50&width=50",
-      online: true,
-    },
-    {
-      id: "3",
-      name: "Taylor Swift",
-      username: "taylors",
-      avatar: "/placeholder.svg?height=50&width=50",
-      online: true,
-    },
-    {
-      id: "4",
-      name: "Jamie Smith",
-      username: "jamies",
-      avatar: "/placeholder.svg?height=50&width=50",
-      online: true,
-    },
-    {
-      id: "5",
-      name: "Jordan Lee",
-      username: "jordanl",
-      avatar: "/placeholder.svg?height=50&width=50",
-      online: true,
-    },
-  ];
-
-  const recentActivities = [
-    {
-      id: "1",
-      user: { name: "Alex Johnson" },
-      action: "commented on your",
-      target: "post",
-      time: "2 hours ago",
-    },
-    {
-      id: "2",
-      user: { name: "Alex Johnson" },
-      action: "commented on your",
-      target: "post",
-      time: "2 hours ago",
-    },
-    {
-      id: "3",
-      user: { name: "Alex Johnson" },
-      action: "commented on your",
-      target: "post",
-      time: "2 hours ago",
     },
   ];
 

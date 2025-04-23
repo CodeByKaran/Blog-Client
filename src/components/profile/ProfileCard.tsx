@@ -28,21 +28,24 @@ export function ProfileCard({ user }: ProfileCardProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-gray-900">
+    <div className="relative overflow-hidden rounded-xl border border-gray-800 bg-transparent font-poppins">
       {/* Header background */}
-      <div className="h-24 w-full bg-gradient-to-r from-purple-900 to-purple-600"></div>
+      <div className="pattern z-10 h-24 w-full bg-gradient-to-t from-gray-950 to-transparent"></div>
 
       {/* User info container */}
-      <div className="p-6 pt-0">
+      <div className="z-20 p-6 pt-3">
         <div className="-mt-12 flex flex-col items-center sm:flex-row sm:items-end sm:space-x-5">
           <div className="group relative">
             <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-gray-900">
               <Image
-                src={user.avatar || "/placeholder.svg?height=200&width=200"}
+                src={
+                  user.avatar ||
+                  "https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+                }
                 alt={user.name}
                 width={96}
                 height={96}
-                className="object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
           </div>
@@ -74,7 +77,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
                         alt={user.name}
                         width={96}
                         height={96}
-                        className="object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                     <div className="absolute right-0 bottom-0 flex items-center justify-center rounded-full bg-purple-600 p-2 text-white shadow-lg">

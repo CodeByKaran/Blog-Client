@@ -28,7 +28,7 @@ export function AboutSection({ bio, onUpdate }: AboutSectionProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-xl border border-gray-800 bg-transparent p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">About Me</h2>
         <Button variant="ghost" size="sm" onClick={() => setIsOpen(true)}>
@@ -45,7 +45,9 @@ export function AboutSection({ bio, onUpdate }: AboutSectionProps) {
           <div className="grid gap-6 py-4">
             <Textarea
               value={currentBio}
-              onChange={(e: any) => setCurrentBio(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setCurrentBio(e.target.value)
+              }
               placeholder="Write something about yourself..."
               className="min-h-[200px] border-gray-700 bg-gray-800"
             />

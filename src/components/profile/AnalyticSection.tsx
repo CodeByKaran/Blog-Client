@@ -13,7 +13,7 @@ interface AnalyticsSectionProps {
 
 export function AnalyticsSection({ data }: AnalyticsSectionProps) {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-xl border border-gray-800 bg-transparent p-6">
       <h2 className="mb-4 text-xl font-semibold text-white">Analytics</h2>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

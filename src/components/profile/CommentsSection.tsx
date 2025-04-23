@@ -37,7 +37,7 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-xl border border-gray-800 bg-transparent p-6">
       <h2 className="mb-4 text-xl font-semibold text-white">Top Comments</h2>
 
       <div className="space-y-4">
@@ -48,7 +48,7 @@ export function CommentsSection({ comments }: CommentsSectionProps) {
                 <p className="line-clamp-2 text-gray-300">{comment.content}</p>
                 <div className="mt-2 flex items-center text-xs text-gray-400">
                   <MessageSquare className="mr-1 h-3 w-3" />
-                  <span>On "{comment.blog.title}"</span>
+                  <span>On &quot;{comment.blog.title}&quot;</span>
                   <span className="mx-2">•</span>
                   <span>
                     {formatDistanceToNow(comment.date, { addSuffix: true })}
