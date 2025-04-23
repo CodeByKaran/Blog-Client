@@ -144,7 +144,7 @@ const CreateBlogForm = () => {
         />
 
         <div className="flex w-full justify-center">
-          <Button type="submit" className="mx-auto my-9 w-1/2">
+          <Button type="submit" className="mx-auto my-9 w-[90%] lg:w-[75%]">
             Publish
           </Button>
         </div>

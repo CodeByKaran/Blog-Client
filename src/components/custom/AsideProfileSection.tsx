@@ -9,7 +9,7 @@ interface ProfileSectionProps {
 
 const ProfileSection = ({ username = "Karan" }: ProfileSectionProps) => {
   return (
-    <div className="mt-2 pl-2">
+    <div className="mt-2 rounded-md bg-background p-2 transition-all duration-300 hover:bg-background/50 md:pl-2">
       <div className="group flex cursor-pointer items-center gap-3">
         <Avatar>
           <AvatarImage src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7" />

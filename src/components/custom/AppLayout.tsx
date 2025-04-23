@@ -156,11 +156,19 @@ const DyanmicHeader = () => {
     return (
       <div className="relative flex w-full flex-col items-center">
         <h1 className="text-center font-poppins text-2xl">Narrate </h1>
-        <span className="absolute top-[25.5px] font-poppins text-xs font-thin text-gray-400/80">
+        <span className="absolute top-[25.5px] hidden font-poppins text-xs font-thin text-gray-400/80 md:block">
           your <AnimatedWords wordsObj={wordsObj} />
         </span>
       </div>
     );
+  }
+
+  if (path == "/signin" || path == "/signup") {
+    return <></>;
+  }
+
+  if (path == "/profile") {
+    return <h1 className="font-poppins text-xl font-medium">Profile</h1>;
   }
 
   return (
@@ -182,6 +190,12 @@ const DyanmicHeader = () => {
 };
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
+  const path = usePathname();
+
+  if (path == "/signin" || path == "/signup") {
+    return <main>{children}</main>;
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-screen">

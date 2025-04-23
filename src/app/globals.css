@@ -7,6 +7,7 @@
   --font-poppins: "Poppins", sans-serif;
   --color-black-show: #060606;
   --breakpoint-s450: 28.125rem;
+  --color-profile: oklch(0.2 0.04 310.94 / 0.51);
 }
 
 @theme inline {

@@ -60,8 +60,8 @@ const AppSidebar = () => {
         </div>
       </SidebarHeader>
       <SidebarSeparator />
-      <SidebarContent className="max-h-fit pb-4 pl-3 sm:pb-0">
-        <SidebarGroup>
+      <SidebarContent className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 max-h-fit pb-4 pl-3 sm:pb-0">
+        <SidebarGroup className="">
           <SidebarGroupLabel>
             <div className="font-poppins text-lg font-medium">Profile</div>
           </SidebarGroupLabel>
