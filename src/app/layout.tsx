@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import GradientBackground from "@/components/custom/GradientBackground";
 import AppLayout from "@/components/custom/AppLayout";
+import { Toaster } from "@/components/ui/sonner";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -26,12 +27,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${poppins.variable} bg-black antialiased`}>
         <GradientBackground />
-        {/* <div className="fixed top-0 left-0 z-[999] flex w-full justify-center">
-          <p className="bg-gradient-to-r from-purple-600 to-purple-300 bg-clip-text text-center font-poppins text-lg font-medium text-transparent">
-            in progress project
-          </p>
-        </div> */}
+
         <AppLayout>{children}</AppLayout>
+        <Toaster />
       </body>
     </html>
   );

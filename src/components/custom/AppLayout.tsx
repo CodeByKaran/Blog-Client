@@ -16,8 +16,6 @@ import { Input } from "../ui/input";
 import { Popover, PopoverContent } from "../ui/popover";
 import { PopoverTrigger } from "@radix-ui/react-popover";
 
-import AnimatedWords from "./AnimatedWords";
-
 // Create a separate toggle button component that uses the useSidebar hook
 function MobileMenuToggle() {
   const { toggleSidebar } = useSidebar();
@@ -34,33 +32,6 @@ function MobileMenuToggle() {
     </Button>
   );
 }
-
-const wordsObj = [
-  {
-    words: ["Unique Experience"],
-  },
-  {
-    words: ["Creative Journey"],
-  },
-  {
-    words: ["Innovative Technology", "Cutting-Edge Solutions"],
-  },
-  {
-    words: ["Inspiring Thoughts"],
-  },
-  {
-    words: ["Digital Transformation"],
-  },
-  {
-    words: ["Future Vision"],
-  },
-  {
-    words: ["Immersive Storytelling"],
-  },
-  {
-    words: ["Breakthrough Ideas"],
-  },
-];
 
 const DyanmicHeader = () => {
   const path = usePathname();
@@ -154,11 +125,15 @@ const DyanmicHeader = () => {
 
   if (path == "/create") {
     return (
-      <div className="relative flex w-full flex-col items-center">
-        <h1 className="text-center font-poppins text-2xl">Narrate </h1>
-        <span className="absolute top-[25.5px] hidden font-poppins text-xs font-thin text-gray-400/80 md:block">
-          your <AnimatedWords wordsObj={wordsObj} />
-        </span>
+      <div className="flex w-full justify-center font-poppins">
+        <div>
+          <h1 className="text-center text-lg font-bold sm:text-2xl">
+            Create New Blog Post
+          </h1>
+          <p className="text-center text-xs text-gray-400 sm:text-sm">
+            Express yourself with the world
+          </p>
+        </div>
       </div>
     );
   }
