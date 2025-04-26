@@ -4,6 +4,7 @@ import "./globals.css";
 import GradientBackground from "@/components/custom/GradientBackground";
 import AppLayout from "@/components/custom/AppLayout";
 import { Toaster } from "@/components/ui/sonner";
+import QueryProvider from "@/providers/QueryProvider";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -27,8 +28,10 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${poppins.variable} bg-black antialiased`}>
         <GradientBackground />
+        <QueryProvider>
+          <AppLayout>{children}</AppLayout>
+        </QueryProvider>
 
-        <AppLayout>{children}</AppLayout>
         <Toaster />
       </body>
     </html>

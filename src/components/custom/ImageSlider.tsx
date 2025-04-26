@@ -4,19 +4,32 @@ import { Carousel, CarouselApi, CarouselContent } from "../ui/carousel";
 const ImageSlider = ({ children }: { children: React.ReactNode }) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number>();
 
   useEffect(() => {
-    if (!api) {
-      return;
-    }
+    if (!api) return;
 
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
+    const updateCount = () => {
+      const newCount = api.scrollSnapList().length;
+      setCount(newCount);
+      setCurrent(api.selectedScrollSnap() + 1);
+    };
 
+    // Initialize immediately
+    updateCount();
+
+    // Update on select events
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
     });
+
+    // Update when children change
+    api.on("slidesChanged", updateCount);
+
+    return () => {
+      api.off("select", () => {});
+      api.off("slidesChanged", updateCount);
+    };
   }, [api]);
   return (
     <div className="relative mt-6 overflow-hidden rounded-lg border border-gray-800">

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   EyeIcon,
   EyeOffIcon,
@@ -17,84 +17,184 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-interface FormData {
-  email: string;
-  username: string;
-  password: string;
-  confirmPassword: string;
-  profileImage: string | null;
-  agreeToTerms: boolean;
-}
+// Define Zod schema for form validation
+const signupSchema = z
+  .object({
+    email: z.string().email("Email is invalid"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+    profileImage: z.string().nullable(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type SignupFormData = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
   const router = useRouter();
-  const [step, setStep] = useState(2);
-  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<
-    boolean | null
-  >(null);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [formData, setFormData] = useState<FormData>({
-    email: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
-    profileImage: null,
-    agreeToTerms: false,
+
+  // React Hook Form
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      email: "",
+      username: "",
+      password: "",
+      confirmPassword: "",
+      profileImage: null,
+    },
   });
 
-  // Form validation states
-  const [errors, setErrors] = useState({
-    email: "",
-    username: "",
-    password: "",
-    confirmPassword: "",
-    agreeToTerms: "",
-  });
+  const username = watch("username");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
+  // Check username availability query
+  const { data: usernameAvailability, isFetching: isCheckingUsername } =
+    useQuery({
+      queryKey: ["usernameAvailability", username],
+      queryFn: async () => {
+        // Only fetch if username is long enough
+        if (!username || username.length < 3) {
+          return null;
+        }
+
+        const response = await fetch(
+          `/api/v1/blog/check-username?username=${encodeURIComponent(username)}`,
+        );
+        if (!response.ok) {
+          throw new Error("Failed to check username availability");
+        }
+        const data = await response.json();
+        return data.available;
+      },
+      enabled: username?.length >= 3,
+      staleTime: 30000, // 30 seconds
     });
 
-    // Clear error when typing
-    if (errors[name as keyof typeof errors]) {
-      setErrors({
-        ...errors,
-        [name]: "",
-      });
-    }
+  // Profile image upload mutation
+  const uploadProfilePicture = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("profileImage", file);
 
-    // Check username availability after typing stops
-    if (name === "username" && value.length > 2) {
-      setIsCheckingUsername(true);
-      // Simulate API call to check username availability
-      setTimeout(() => {
-        // For demo purposes, usernames containing "admin" are unavailable
-        const available = !value.toLowerCase().includes("admin");
-        setIsUsernameAvailable(available);
-        setIsCheckingUsername(false);
-      }, 800);
-    } else if (name === "username") {
-      setIsUsernameAvailable(null);
-    }
-  };
+      const response = await fetch("/api/v1/blog/upload-profile-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload profile image");
+      }
+
+      const data = await response.json();
+      return data.imageUrl;
+    },
+    onSuccess: (imageUrl: string) => {
+      setValue("profileImage", imageUrl);
+    },
+  });
+
+  // Form submission mutation
+  const submitForm = useMutation({
+    mutationFn: async (data: SignupFormData) => {
+      const response = await fetch("/api/v1/blog/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create account");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      setStep(2);
+    },
+  });
+
+  // OTP verification mutation
+  const verifyOtp = useMutation({
+    mutationFn: async (otpValue: string) => {
+      const response = await fetch("/api/v1/blog/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: watch("email"),
+          otp: otpValue,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to verify OTP");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      router.push("/signin");
+    },
+  });
+
+  // Resend OTP mutation
+  const resendOtpMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/v1/blog/resend-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: watch("email"),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to resend OTP");
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      // Reset OTP fields
+      setOtp(["", "", "", "", "", ""]);
+      // Focus on first input
+      const firstInput = document.getElementById("otp-0");
+      if (firstInput) {
+        firstInput.focus();
+      }
+    },
+  });
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, you would upload the file to a server
-      // For this demo, we'll just use a placeholder
-      setFormData({
-        ...formData,
-        profileImage: "/placeholder.svg?height=200&width=200",
-      });
+      uploadProfilePicture.mutate(file);
     }
   };
 
@@ -128,123 +228,42 @@ export function SignupForm() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {
-      email: "",
-      username: "",
-      password: "",
-      confirmPassword: "",
-      agreeToTerms: "",
-    };
-
-    let isValid = true;
-
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-      isValid = false;
+  const onSubmit = (data: SignupFormData) => {
+    if (step === 1) {
+      submitForm.mutate(data);
     }
-
-    // Username validation
-    if (!formData.username) {
-      newErrors.username = "Username is required";
-      isValid = false;
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters";
-      isValid = false;
-    } else if (isUsernameAvailable === false) {
-      newErrors.username = "Username is already taken";
-      isValid = false;
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-      isValid = false;
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-      isValid = false;
-    }
-
-    // Confirm password validation
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-      isValid = false;
-    }
-
-    // Terms agreement validation
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = "You must agree to the terms";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (step === 1) {
-      if (validateForm()) {
-        setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-          setIsLoading(false);
-          setStep(2);
-        }, 1500);
-      }
-    } else if (step === 2) {
-      // Validate OTP
-      if (otp.join("").length === 6) {
-        setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-          setIsLoading(false);
-          router.push("/signin");
-        }, 1500);
-      }
+    const otpValue = otp.join("");
+    if (otpValue.length === 6) {
+      verifyOtp.mutate(otpValue);
     }
   };
 
   const resendOtp = () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      // Reset OTP fields
-      setOtp(["", "", "", "", "", ""]);
-      // Focus on first input
-      const firstInput = document.getElementById("otp-0");
-      if (firstInput) {
-        firstInput.focus();
-      }
-    }, 1500);
+    resendOtpMutation.mutate();
   };
 
   return (
     <div className="mt-6">
       {step === 1 ? (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              name="email"
+              {...register("email")}
               type="email"
               placeholder="name@example.com"
-              value={formData.email}
-              onChange={handleInputChange}
               className={`border-gray-700 bg-gray-900/50 backdrop-blur-sm ${
                 errors.email ? "border-red-500" : ""
               }`}
-              disabled={isLoading}
+              disabled={submitForm.isPending}
             />
             {errors.email && (
-              <p className="text-xs text-red-500">{errors.email}</p>
+              <p className="text-xs text-red-500">{errors.email.message}</p>
             )}
           </div>
 
@@ -253,33 +272,40 @@ export function SignupForm() {
             <div className="relative">
               <Input
                 id="username"
-                name="username"
+                {...register("username")}
                 placeholder="Choose a unique username"
-                value={formData.username}
-                onChange={handleInputChange}
                 className={`border-gray-700 bg-gray-900/50 pr-10 backdrop-blur-sm ${
                   errors.username ? "border-red-500" : ""
                 }`}
-                disabled={isLoading}
+                disabled={submitForm.isPending}
               />
               <div className="absolute top-2.5 right-3">
                 {isCheckingUsername && (
                   <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                 )}
-                {!isCheckingUsername && isUsernameAvailable === true && (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                )}
-                {!isCheckingUsername && isUsernameAvailable === false && (
+                {!isCheckingUsername &&
+                  usernameAvailability === true &&
+                  username?.length >= 3 && (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  )}
+                {!isCheckingUsername && usernameAvailability === false && (
                   <XCircle className="h-4 w-4 text-red-500" />
                 )}
               </div>
             </div>
             {errors.username && (
-              <p className="text-xs text-red-500">{errors.username}</p>
+              <p className="text-xs text-red-500">{errors.username.message}</p>
             )}
             {!errors.username &&
-              isUsernameAvailable === true &&
-              formData.username.length > 0 && (
+              usernameAvailability === false &&
+              username?.length >= 3 && (
+                <p className="text-xs text-red-500">
+                  Username is already taken
+                </p>
+              )}
+            {!errors.username &&
+              usernameAvailability === true &&
+              username?.length >= 3 && (
                 <p className="text-xs text-green-500">Username is available</p>
               )}
           </div>
@@ -288,9 +314,9 @@ export function SignupForm() {
             <Label htmlFor="profile-image">Profile Picture (Optional)</Label>
             <div className="flex items-center space-x-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-800">
-                {formData.profileImage ? (
+                {watch("profileImage") ? (
                   <Image
-                    src={formData.profileImage || "/placeholder.svg"}
+                    src={watch("profileImage") || "/placeholder.svg"}
                     alt="Profile"
                     fill
                     className="object-cover"
@@ -308,6 +334,7 @@ export function SignupForm() {
                   accept="image/*"
                   onChange={handleProfileImageChange}
                   className="hidden"
+                  disabled={uploadProfilePicture.isPending}
                 />
                 <Button
                   type="button"
@@ -316,9 +343,18 @@ export function SignupForm() {
                   onClick={() =>
                     document.getElementById("profile-image")?.click()
                   }
-                  disabled={isLoading}
+                  disabled={
+                    submitForm.isPending || uploadProfilePicture.isPending
+                  }
                 >
-                  Upload Photo
+                  {uploadProfilePicture.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+                      Uploading...
+                    </>
+                  ) : (
+                    "Upload Photo"
+                  )}
                 </Button>
               </div>
             </div>
@@ -329,15 +365,13 @@ export function SignupForm() {
             <div className="relative">
               <Input
                 id="password"
-                name="password"
+                {...register("password")}
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a secure password"
-                value={formData.password}
-                onChange={handleInputChange}
                 className={`border-gray-700 bg-gray-900/50 pr-10 backdrop-blur-sm ${
                   errors.password ? "border-red-500" : ""
                 }`}
-                disabled={isLoading}
+                disabled={submitForm.isPending}
               />
               <button
                 type="button"
@@ -353,7 +387,7 @@ export function SignupForm() {
               </button>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-500">{errors.password}</p>
+              <p className="text-xs text-red-500">{errors.password.message}</p>
             )}
           </div>
 
@@ -362,15 +396,13 @@ export function SignupForm() {
             <div className="relative">
               <Input
                 id="confirmPassword"
-                name="confirmPassword"
+                {...register("confirmPassword")}
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm your password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
                 className={`border-gray-700 bg-gray-900/50 pr-10 backdrop-blur-sm ${
                   errors.confirmPassword ? "border-red-500" : ""
                 }`}
-                disabled={isLoading}
+                disabled={submitForm.isPending}
               />
               <button
                 type="button"
@@ -386,53 +418,18 @@ export function SignupForm() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+              <p className="text-xs text-red-500">
+                {errors.confirmPassword.message}
+              </p>
             )}
           </div>
-
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="agreeToTerms"
-              name="agreeToTerms"
-              checked={formData.agreeToTerms}
-              onCheckedChange={(checked) =>
-                setFormData({
-                  ...formData,
-                  agreeToTerms: checked === true,
-                })
-              }
-              disabled={isLoading}
-            />
-            <label
-              htmlFor="agreeToTerms"
-              className={`text-xs leading-tight ${errors.agreeToTerms ? "text-red-500" : "text-gray-300"}`}
-            >
-              I agree to the{" "}
-              <Link
-                href="/terms"
-                className="text-purple-400 underline underline-offset-2 hover:text-purple-300"
-              >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                href="/privacy"
-                className="text-purple-400 underline underline-offset-2 hover:text-purple-300"
-              >
-                Privacy Policy
-              </Link>
-            </label>
-          </div>
-          {errors.agreeToTerms && (
-            <p className="text-xs text-red-500">{errors.agreeToTerms}</p>
-          )}
 
           <Button
             type="submit"
             className="mt-2 w-full bg-purple-600 hover:bg-purple-700"
-            disabled={isLoading || isCheckingUsername}
+            disabled={submitForm.isPending || isCheckingUsername}
           >
-            {isLoading ? (
+            {submitForm.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating
                 Account
@@ -462,13 +459,13 @@ export function SignupForm() {
               <div>
                 <p className="text-sm text-purple-300">
                   We&apos;ve sent a verification code to{" "}
-                  <span className="font-medium">{formData.email}</span>
+                  <span className="font-medium">{watch("email")}</span>
                 </p>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleVerifyOtp} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="otp-0">Enter Verification Code</Label>
               <div className="flex justify-center space-x-2">
@@ -484,7 +481,7 @@ export function SignupForm() {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     className="h-12 w-12 border-gray-700 bg-gray-900/50 text-center text-lg"
-                    disabled={isLoading}
+                    disabled={verifyOtp.isPending}
                   />
                 ))}
               </div>
@@ -494,9 +491,9 @@ export function SignupForm() {
               <Button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700"
-                disabled={isLoading}
+                disabled={verifyOtp.isPending}
               >
-                {isLoading ? (
+                {verifyOtp.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying
                   </>
@@ -510,9 +507,11 @@ export function SignupForm() {
                   type="button"
                   onClick={resendOtp}
                   className="text-sm text-purple-400 hover:text-purple-300"
-                  disabled={isLoading}
+                  disabled={verifyOtp.isPending || resendOtpMutation.isPending}
                 >
-                  Didn &apos; t receive a code? Resend
+                  {resendOtpMutation.isPending
+                    ? "Sending new code..."
+                    : "Didn&apos;t receive a code? Resend"}
                 </button>
               </div>
             </div>

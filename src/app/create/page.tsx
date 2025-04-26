@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,29 +45,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Quote,
   ImageIcon,
-  LinkIcon,
-  Code,
-  Heading1,
-  Heading2,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Eye,
   Save,
   Trash2,
   HelpCircle,
-  FileText,
   X,
   Loader2,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import ImageSlider from "@/components/custom/ImageSlider";
+import { CarouselItem } from "@/components/ui/carousel";
 
 // Available categories for blog posts
 const categories = [
@@ -106,7 +94,6 @@ export default function CreatePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("write");
   const [showAIDialog, setShowAIDialog] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
@@ -124,9 +111,7 @@ export default function CreatePage() {
   });
 
   // Image preview state
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -174,46 +159,46 @@ export default function CreatePage() {
     }
   };
 
-  // Handle image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-      // Create a preview URL
+    // Check if adding these files would exceed 5 images
+    if (imagePreviews.length + files.length > 5) {
+      alert("Please select up to 5 images total");
+      e.target.value = ""; // Clear the selection
+      return;
+    }
+
+    // Process all selected files
+    const newImagePreviews: string[] = [];
+
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
-        setImagePreview(reader.result as string);
+        const imageUrl = reader.result as string;
+        newImagePreviews.push(imageUrl);
+
+        // Update state once all images are processed
+        if (newImagePreviews.length === files.length) {
+          setImagePreviews((prev) => [...prev, ...newImagePreviews]);
+        }
       };
       reader.readAsDataURL(file);
-
-      // Simulate upload progress
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 10;
-        setUploadProgress(progress);
-
-        if (progress >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          setFormData({
-            ...formData,
-            coverImage: URL.createObjectURL(file),
-          });
-        }
-      }, 300);
-    }
+    });
   };
 
   // Handle image removal
-  const handleRemoveImage = () => {
-    setImagePreview(null);
-    setFormData({
-      ...formData,
-      coverImage: null,
-    });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  const handleRemoveImage = (index?: number) => {
+    if (typeof index === "number") {
+      // Remove specific image
+      setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove all images
+      setImagePreviews([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -250,78 +235,6 @@ export default function CreatePage() {
       setIsSubmitting(false);
       router.push("/profile");
     }, 2000);
-  };
-
-  // Format the content for preview
-  const formatContentForPreview = () => {
-    if (!formData.content) return "<p>No content to preview</p>";
-
-    // Very basic markdown-like formatting
-    return formData.content
-      .replace(/# (.*?)$/gm, "<h1>$1</h1>")
-      .replace(/## (.*?)$/gm, "<h2>$1</h2>")
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      .replace(/\n/g, "<br />");
-  };
-
-  // Insert formatting into content
-  const insertFormatting = (format: string) => {
-    const textarea = document.getElementById("content") as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-    let formattedText = "";
-
-    switch (format) {
-      case "bold":
-        formattedText = `**${selectedText || "bold text"}**`;
-        break;
-      case "italic":
-        formattedText = `*${selectedText || "italic text"}*`;
-        break;
-      case "h1":
-        formattedText = `# ${selectedText || "Heading 1"}`;
-        break;
-      case "h2":
-        formattedText = `## ${selectedText || "Heading 2"}`;
-        break;
-      case "quote":
-        formattedText = `> ${selectedText || "Quote"}`;
-        break;
-      case "code":
-        formattedText = `\`${selectedText || "code"}\``;
-        break;
-      case "link":
-        formattedText = `[${selectedText || "link text"}](url)`;
-        break;
-      case "list":
-        formattedText = `\n- ${selectedText || "List item"}`;
-        break;
-      case "ordered-list":
-        formattedText = `\n1. ${selectedText || "List item"}`;
-        break;
-      default:
-        formattedText = selectedText;
-    }
-
-    const newContent =
-      textarea.value.substring(0, start) +
-      formattedText +
-      textarea.value.substring(end);
-    setFormData({
-      ...formData,
-      content: newContent,
-    });
-
-    // Set focus back to textarea and position cursor after inserted text
-    setTimeout(() => {
-      textarea.focus();
-      const newCursorPos = start + formattedText.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
   };
 
   return (
@@ -473,252 +386,22 @@ export default function CreatePage() {
                 Content <span className="ml-1 text-red-500">*</span>
               </Label>
 
-              <Tabs
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="w-full"
-              >
-                <TabsList className="mb-2 grid w-full grid-cols-2">
-                  <TabsTrigger
-                    value="write"
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Write
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="preview"
-                    className="flex items-center gap-2"
-                  >
-                    <Eye className="h-4 w-4" />
-                    Preview
-                  </TabsTrigger>
-                </TabsList>
+              {/* Content textarea */}
+              <Textarea
+                id="content"
+                name="content"
+                spellCheck={false}
+                value={formData.content}
+                onChange={handleInputChange}
+                placeholder="Start writing your amazing blog post here..."
+                className="min-h-[400px] resize-none border-gray-700 bg-black font-mono text-sm focus:border-purple-500"
+                required
+              />
 
-                <TabsContent value="write" className="space-y-4">
-                  {/* Formatting toolbar */}
-                  <div className="flex flex-wrap items-center gap-1 rounded-md border border-gray-700 bg-gray-800 p-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("bold")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Bold className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Bold</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("italic")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Italic className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Italic</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("h1")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Heading1 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Heading 1</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("h2")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Heading2 className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Heading 2</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <div className="mx-1 h-6 w-px bg-gray-700"></div>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("list")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <List className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Bullet List</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("ordered-list")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <ListOrdered className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Numbered List</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("quote")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Quote className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Quote</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <div className="mx-1 h-6 w-px bg-gray-700"></div>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("code")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Code className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Code</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => insertFormatting("link")}
-                            className="h-8 w-8 p-0"
-                          >
-                            <LinkIcon className="h-4 w-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Link</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-
-                    <div className="ml-auto flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertFormatting("align-left")}
-                        className="h-8 w-8 p-0"
-                      >
-                        <AlignLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertFormatting("align-center")}
-                        className="h-8 w-8 p-0"
-                      >
-                        <AlignCenter className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => insertFormatting("align-right")}
-                        className="h-8 w-8 p-0"
-                      >
-                        <AlignRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Content textarea */}
-                  <Textarea
-                    id="content"
-                    name="content"
-                    spellCheck={false}
-                    value={formData.content}
-                    onChange={handleInputChange}
-                    placeholder="Start writing your amazing blog post here..."
-                    className="min-h-[400px] resize-none border-gray-700 bg-black font-mono text-sm focus:border-purple-500"
-                    required
-                  />
-
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Supports Markdown formatting</span>
-                    <span>{formData.content.length} characters</span>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="preview" className="min-h-[400px]">
-                  <div className="prose prose-invert min-h-[400px] max-w-none rounded-md border border-gray-700 bg-gray-900/50 p-6">
-                    {formData.title && (
-                      <h1 className="mb-4 text-2xl font-bold">
-                        {formData.title}
-                      </h1>
-                    )}
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: formatContentForPreview(),
-                      }}
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Supports Markdown formatting</span>
+                <span>{formData.content.length} characters</span>
+              </div>
             </div>
           </div>
 
@@ -728,7 +411,7 @@ export default function CreatePage() {
             <Card className="border-gray-800 bg-transparent">
               <CardContent className="space-y-4 p-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Cover Image</h3>
+                  <h3 className="text-lg font-medium">Images</h3>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -743,56 +426,53 @@ export default function CreatePage() {
                   </TooltipProvider>
                 </div>
 
-                {imagePreview ? (
-                  <div className="relative overflow-hidden rounded-md">
-                    <Image
-                      src={imagePreview || "/placeholder.svg"}
-                      alt="Cover preview"
-                      width={400}
-                      height={225}
-                      className="h-[200px] w-full object-cover"
-                    />
-                    {isUploading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                        <div className="h-2.5 w-3/4 rounded-full bg-gray-700">
-                          <div
-                            className="h-2.5 rounded-full bg-purple-600"
-                            style={{ width: `${uploadProgress}%` }}
-                          ></div>
+                <ImageSlider>
+                  <>
+                    {imagePreviews.map((image, index) => (
+                      <CarouselItem key={index}>
+                        <div className="relative overflow-hidden">
+                          <Image
+                            width={516}
+                            height={516}
+                            src={image}
+                            alt={`Image ${index + 1}`}
+                            className="h-[416px] w-full object-cover transition-transform duration-500 hover:scale-105"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 left-6 h-8 w-8"
+                            onClick={() => handleRemoveImage(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      onClick={handleRemoveImage}
-                      disabled={isUploading}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div
-                    className="cursor-pointer rounded-md border-2 border-dashed border-gray-700 p-8 text-center transition-colors hover:border-gray-600"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <ImageIcon className="mx-auto mb-4 h-10 w-10 text-gray-500" />
-                    <p className="mb-2 text-sm text-gray-400">
-                      Drag and drop an image, or click to browse
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Recommended: 1200 x 675px (16:9)
-                    </p>
-                  </div>
-                )}
+                      </CarouselItem>
+                    ))}
+                  </>
+                </ImageSlider>
+                <div
+                  className="cursor-pointer rounded-md border-2 border-dashed border-gray-700 p-8 text-center transition-colors hover:border-gray-600"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <ImageIcon className="mx-auto mb-4 h-10 w-10 text-gray-500" />
+                  <p className="mb-2 text-sm text-gray-400">
+                    Drag and drop an image, or click to browse
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Recommended: 1200 x 675px (16:9)
+                  </p>
+                </div>
+
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageUpload}
                   className="hidden"
+                  title="Select up to 5 images"
                 />
               </CardContent>
             </Card>
@@ -886,7 +566,7 @@ export default function CreatePage() {
                             : "bg-gray-800 hover:bg-gray-700"
                         }`}
                         onClick={() =>
-                          formData.tags.length < 10
+                          formData.tags.length < 6
                             ? handleTagToggle(tag)
                             : toast.custom((t) => (
                                 <div className="relative w-[350px] rounded-md border border-r-gray-900 bg-black p-4 font-poppins">
@@ -894,7 +574,7 @@ export default function CreatePage() {
                                     Maximum tags reached
                                   </h1>
                                   <p className="text-sm text-red-400">
-                                    You can only add up to 10 tags.
+                                    You can only add up to 6 tags.
                                   </p>
                                   <X
                                     height={4}
