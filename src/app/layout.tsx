@@ -28,6 +28,11 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${poppins.variable} bg-black antialiased`}>
         <GradientBackground />
+        <div className="z-50 flex items-center justify-center">
+          <p className="bg-gradient-to-r from-indigo-600 to-purple-300 bg-clip-text font-poppins text-lg font-bold text-transparent">
+            Project is in Under Development
+          </p>
+        </div>
         <QueryProvider>
           <AppLayout>{children}</AppLayout>
         </QueryProvider>
