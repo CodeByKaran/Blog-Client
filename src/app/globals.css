@@ -208,3 +208,8 @@
       var(--gp),
     linear-gradient(90deg, var(--c2) 0 50%, var(--c3) 0 100%) var(--gp);
 }
+
+.profile:hover .profileArrow {
+  transform: translateX(-8px);
+  animation-duration: 300ms;
+}

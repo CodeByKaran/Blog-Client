@@ -1,5 +1,5 @@
 import BlogCard from "@/components/custom/BlogCard";
-import React from "react";
+
 import { sampleBlog } from "@/lib/data";
 
 const Home = () => {

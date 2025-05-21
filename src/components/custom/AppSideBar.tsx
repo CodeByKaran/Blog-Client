@@ -17,7 +17,9 @@ import {
 import Link from "next/link";
 import ProfileSection from "./AsideProfileSection";
 import LoginLogoutButton from "./LoginLogoutButton";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "@/hooks/useSession";
+import { useEffect } from "react";
 
 const navItems = [
   {
@@ -48,6 +50,18 @@ const navItems = [
 ];
 
 const AppSidebar = () => {
+  const router = useRouter();
+  const { session, isLoading } = useSession();
+  useEffect(() => {
+    console.log(session);
+
+    if (session && !isLoading) {
+      router.push("/");
+    }
+    if (!session && !isLoading) {
+      router.push("/signin");
+    }
+  }, [session, isLoading, router]);
   const path = usePathname();
   const toggle = useSidebar();
   return (
@@ -65,7 +79,11 @@ const AppSidebar = () => {
           <SidebarGroupLabel>
             <div className="font-poppins text-lg font-medium">Profile</div>
           </SidebarGroupLabel>
-          <ProfileSection />
+          <ProfileSection
+            username={session?.data?.user?.username}
+            image={session?.data?.user?.image}
+            isLoading={isLoading}
+          />
         </SidebarGroup>
       </SidebarContent>
       <SidebarContent className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 pt-1 pl-3">
@@ -95,7 +113,10 @@ const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="pl-3">
-        <LoginLogoutButton />
+        <LoginLogoutButton
+          session={session?.data?.user.username}
+          isLoading={isLoading}
+        />
         <div className="px-4 py-2 text-xs text-muted-foreground">
           © 2025 Narrate Inc.
         </div>

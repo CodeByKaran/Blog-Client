@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react";
+import { signIn } from "@/lib/fetch";
+import { toast } from "sonner";
 
 export function LoginForm() {
   const router = useRouter();
@@ -25,10 +26,10 @@ export function LoginForm() {
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     });
 
     // Clear error when typing
@@ -65,26 +66,22 @@ export function LoginForm() {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-
-        // For demo purposes, check if email contains "error" to show an error
-        if (formData.email.includes("error")) {
-          setErrors({
-            ...errors,
-            general: "Invalid email or password. Please try again.",
-          });
-          return;
-        }
-
-        router.push("/profile");
-      }, 1500);
+      signIn(formData.email, formData.password)
+        .then((res) => {
+          console.log(res);
+          router.push("/");
+        })
+        .catch((error) => {
+          toast.error("signin error");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
@@ -155,27 +152,6 @@ export function LoginForm() {
           {errors.password && (
             <p className="text-xs text-red-500">{errors.password}</p>
           )}
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="rememberMe"
-            name="rememberMe"
-            checked={formData.rememberMe}
-            onCheckedChange={(checked) =>
-              setFormData({
-                ...formData,
-                rememberMe: checked === true,
-              })
-            }
-            disabled={isLoading}
-          />
-          <label
-            htmlFor="rememberMe"
-            className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Remember me
-          </label>
         </div>
 
         <Button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,14 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  checkAndVerifyOtp,
+  checkSameUsername,
+  refreshOtp,
+  signUp,
+} from "@/lib/fetch";
+import { useDebounce } from "@uidotdev/usehooks";
+import { toast } from "sonner";
 
 // Define Zod schema for form validation
 const signupSchema = z
@@ -28,8 +36,11 @@ const signupSchema = z
     email: z.string().email("Email is invalid"),
     username: z.string().min(3, "Username must be at least 3 characters"),
     password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-    profileImage: z.string().nullable(),
+    first_name: z.string().min(3, "First name must be at least 3 characters"),
+    last_name: z.string().min(3, "Last name must be at least 3 characters"),
+    confirmPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -50,153 +61,80 @@ export function SignupForm() {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       email: "",
+      first_name: "",
+      last_name: "",
       username: "",
       password: "",
-      confirmPassword: "",
-      profileImage: null,
     },
   });
-
   const username = watch("username");
-
-  // Check username availability query
-  const { data: usernameAvailability, isFetching: isCheckingUsername } =
-    useQuery({
-      queryKey: ["usernameAvailability", username],
-      queryFn: async () => {
-        // Only fetch if username is long enough
-        if (!username || username.length < 3) {
-          return null;
-        }
-
-        const response = await fetch(
-          `/api/v1/blog/check-username?username=${encodeURIComponent(username)}`,
-        );
-        if (!response.ok) {
-          throw new Error("Failed to check username availability");
-        }
-        const data = await response.json();
-        return data.available;
-      },
-      enabled: username?.length >= 3,
-      staleTime: 30000, // 30 seconds
-    });
-
-  // Profile image upload mutation
-  const uploadProfilePicture = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("profileImage", file);
-
-      const response = await fetch("/api/v1/blog/upload-profile-image", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload profile image");
-      }
-
-      const data = await response.json();
-      return data.imageUrl;
-    },
-    onSuccess: (imageUrl: string) => {
-      setValue("profileImage", imageUrl);
-    },
-  });
+  const debouncedUsername = useDebounce(username, 500);
 
   // Form submission mutation
   const submitForm = useMutation({
-    mutationFn: async (data: SignupFormData) => {
-      const response = await fetch("/api/v1/blog/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    mutationFn: (data: SignupFormData) => signUp(data),
+    onSuccess: (res: any) => {
+      toast.success(
+        `verification code has sent to your email , please check spam in case not found!`,
+        {
+          duration: 6000,
         },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create account");
-      }
-
-      return await response.json();
-    },
-    onSuccess: () => {
+      );
       setStep(2);
+    },
+    onError: (err: any) => {
+      toast.error(`${err.response.data.message}`, {
+        duration: 6000,
+      });
     },
   });
 
+  const { isFetching: isCheckingUsername, data: usernameAvailability } =
+    useQuery({
+      queryKey: ["checkUsername", debouncedUsername],
+      queryFn: () => checkSameUsername(debouncedUsername),
+      enabled: debouncedUsername?.length >= 3,
+      retry: false,
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
+    });
+
   // OTP verification mutation
   const verifyOtp = useMutation({
-    mutationFn: async (otpValue: string) => {
-      const response = await fetch("/api/v1/blog/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: watch("email"),
-          otp: otpValue,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to verify OTP");
-      }
-
-      return await response.json();
-    },
+    mutationFn: (otp: string) => checkAndVerifyOtp(watch("email"), otp),
     onSuccess: () => {
-      router.push("/signin");
+      router.push("/profile");
+    },
+    onError: (err: any) => {
+      toast.error(`${err.response.data.message}`);
     },
   });
 
   // Resend OTP mutation
   const resendOtpMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/v1/blog/resend-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: watch("email"),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to resend OTP");
-      }
-
-      return await response.json();
-    },
+    mutationFn: () => refreshOtp(watch("email")),
     onSuccess: () => {
-      // Reset OTP fields
+      toast.success(
+        `verification code has sent to your email, please check spam in case not found!`,
+        {
+          duration: 6000,
+        },
+      );
       setOtp(["", "", "", "", "", ""]);
-      // Focus on first input
       const firstInput = document.getElementById("otp-0");
       if (firstInput) {
         firstInput.focus();
       }
     },
+    onError: (err: any) => {
+      toast.error(`${err.response.data.message}`);
+    },
   });
-
-  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadProfilePicture.mutate(file);
-    }
-  };
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) {
@@ -228,7 +166,12 @@ export function SignupForm() {
     }
   };
 
-  const onSubmit = (data: SignupFormData) => {
+  const SubmitForm = (data: SignupFormData) => {
+    // Don't proceed if username is already taken
+    if (usernameAvailability?.data?.exists) {
+      return;
+    }
+
     if (step === 1) {
       submitForm.mutate(data);
     }
@@ -249,7 +192,38 @@ export function SignupForm() {
   return (
     <div className="mt-6">
       {step === 1 ? (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(SubmitForm)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="first_name">First Name</Label>
+            <Input
+              id="first_name"
+              {...register("first_name")}
+              type="text"
+              placeholder="Enter your first name"
+              className={`border-gray-700 bg-gray-900/50 backdrop-blur-sm ${errors.first_name ? "border-red-500" : ""}`}
+              disabled={submitForm.isPending}
+            />
+            {errors.first_name && (
+              <p className="text-xs text-red-500">
+                {errors.first_name.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="last_name">Last Name</Label>
+            <Input
+              id="last_name"
+              {...register("last_name")}
+              type="text"
+              placeholder="Enter your last name"
+              className={`border-gray-700 bg-gray-900/50 backdrop-blur-sm ${errors.last_name ? "border-red-500" : ""}`}
+              disabled={submitForm.isPending}
+            />
+            {errors.last_name && (
+              <p className="text-xs text-red-500">{errors.last_name.message}</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -284,13 +258,14 @@ export function SignupForm() {
                   <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                 )}
                 {!isCheckingUsername &&
-                  usernameAvailability === true &&
-                  username?.length >= 3 && (
+                  usernameAvailability?.data?.exists === false &&
+                  watch("username")?.length >= 3 && (
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                   )}
-                {!isCheckingUsername && usernameAvailability === false && (
-                  <XCircle className="h-4 w-4 text-red-500" />
-                )}
+                {!isCheckingUsername &&
+                  usernameAvailability?.data?.exists === true && (
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  )}
               </div>
             </div>
             {errors.username && (
@@ -308,56 +283,6 @@ export function SignupForm() {
               username?.length >= 3 && (
                 <p className="text-xs text-green-500">Username is available</p>
               )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="profile-image">Profile Picture (Optional)</Label>
-            <div className="flex items-center space-x-4">
-              <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-800">
-                {watch("profileImage") ? (
-                  <Image
-                    src={watch("profileImage") || "/placeholder.svg"}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <Camera className="h-6 w-6 text-gray-400" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <Input
-                  id="profile-image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                  className="hidden"
-                  disabled={uploadProfilePicture.isPending}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-gray-700 bg-gray-800"
-                  onClick={() =>
-                    document.getElementById("profile-image")?.click()
-                  }
-                  disabled={
-                    submitForm.isPending || uploadProfilePicture.isPending
-                  }
-                >
-                  {uploadProfilePicture.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-                      Uploading...
-                    </>
-                  ) : (
-                    "Upload Photo"
-                  )}
-                </Button>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -511,7 +436,7 @@ export function SignupForm() {
                 >
                   {resendOtpMutation.isPending
                     ? "Sending new code..."
-                    : "Didn&apos;t receive a code? Resend"}
+                    : "Didn't receive a code? Resend"}
                 </button>
               </div>
             </div>
